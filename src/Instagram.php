@@ -208,7 +208,7 @@ class Instagram
         if ($limit > 0) {
             $params['count'] = $limit;
         }
-        if (isset($max_id)) {
+        if (isset($max_like_id)) {
             $params['max_like_id'] = $max_like_id;
         }
 
