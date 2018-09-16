@@ -88,6 +88,18 @@ class Instagram
     private $_xRateLimitRemaining;
 
     /**
+     * Timeout
+     * @var integer
+     */
+    private $_timeout = 90;
+
+    /**
+     * Connection Timeout
+     * @var integer
+     */
+    private $_connectTimeout = 20;
+
+    /**
      * Default constructor.
      *
      * @param array|string $config Instagram configuration data
@@ -103,6 +115,14 @@ class Instagram
             $this->setApiKey($config['apiKey']);
             $this->setApiSecret($config['apiSecret']);
             $this->setApiCallback($config['apiCallback']);
+            
+            if (isset($config['timeout'])) {
+                $this->setTimeout($config['timeout']);    
+            }
+            
+            if (isset($config['connectTimeout'])) {
+                $this->setConnectTimeout($config['connectTimeout']);    
+            }
         } elseif (is_string($config)) {
             // if you only want to access public data
             $this->setApiKey($config);
@@ -623,8 +643,8 @@ class Instagram
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $apiCall);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headerData);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $this->_connectTimeout);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_HEADER, true);
@@ -640,6 +660,11 @@ class Instagram
         }
 
         $jsonData = curl_exec($ch);
+
+        if (!$jsonData) {
+            throw new InstagramException('Error: _makeCall() - cURL error: ' . curl_error($ch), curl_errno($ch));
+        }
+
         // split header from JSON data
         // and assign each to a variable
         list($headerContent, $jsonData) = explode("\r\n\r\n", $jsonData, 2);
@@ -650,10 +675,6 @@ class Instagram
         // get the 'X-Ratelimit-Remaining' header value
         if (isset($headers['X-Ratelimit-Remaining'])) {
             $this->_xRateLimitRemaining = trim($headers['X-Ratelimit-Remaining']);
-        }
-
-        if (!$jsonData) {
-            throw new InstagramException('Error: _makeCall() - cURL error: ' . curl_error($ch));
         }
 
         curl_close($ch);
@@ -681,7 +702,7 @@ class Instagram
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/json'));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);
         $jsonData = curl_exec($ch);
 
         if (!$jsonData) {
@@ -845,5 +866,23 @@ class Instagram
     public function setSignedHeader($signedHeader)
     {
         $this->_signedheader = $signedHeader;
+    }
+
+    /**
+     * Set Timeout for API call
+     * @param int $timeout
+     */
+    public function setTimeout($timeout)
+    {
+        $this->_timeout = $timeout;
+    }
+
+    /**
+     * Set Connection Timeout for API call
+     * @param int $connectTimeout
+     */
+    public function setConnectTimeout($connectTimeout)
+    {
+        $this->_connectTimeout = $connectTimeout;
     }
 }
