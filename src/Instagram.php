@@ -91,13 +91,13 @@ class Instagram
      * Timeout
      * @var integer
      */
-    private $_timeout = 90;
+    private $_timeout = 90000;
 
     /**
      * Connection Timeout
      * @var integer
      */
-    private $_connectTimeout = 20;
+    private $_connectTimeout = 20000;
 
     /**
      * Default constructor.
